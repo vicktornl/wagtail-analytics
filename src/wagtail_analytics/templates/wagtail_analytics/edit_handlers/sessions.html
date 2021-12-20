@@ -1,0 +1,39 @@
+{% load i18n %}
+{% load static %}
+{% load wagtailcore_tags %}
+
+<fieldset>
+    {% if self.heading %}
+        <legend>{{ self.heading }}</legend>
+    {% endif %}
+    <div class="nice-padding">
+        <div class="col12 clearfix">
+            <h2>{% trans "Sessions" %}</h2>
+            <div id="sessions-container" class="chart"></div>
+        </div>
+      </div>
+</fieldset>
+
+<script>
+(function(w,d,s,g,js,fjs){
+  g=w.gapi||(w.gapi={});g.analytics={q:[],ready:function(cb){this.q.push(cb)}};
+  js=d.createElement(s);fjs=d.getElementsByTagName(s)[0];
+  js.src='https://apis.google.com/js/platform.js';
+  fjs.parentNode.insertBefore(js,fjs);js.onload=function(){g.load('analytics')};
+}(window,document,'script'));
+</script>
+
+<script>
+  gapi.analytics.ready(function() {
+    console.log("Proberen token op te halen...")
+    getAPIToken('{{ config_url }}').then(function(accessToken){
+      console.log("Token: " + accessToken);
+      gapi.analytics.auth.authorize({
+        'serverAuth': {
+          'access_token': accessToken
+        }
+      });
+          renderSessions('{{ id }}', 'sessions-container');
+  });
+  });
+</script>

@@ -1,0 +1,110 @@
+{% extends "wagtailadmin/base.html" %}
+
+{% load i18n static %}
+
+{% block titletag %}{% trans "Analytics" %}{% endblock %}
+
+{% block extra_css %}
+    {% include "wagtailadmin/pages/_editor_css.html" %}
+    {{ site_switcher.media.css }}
+    <link rel="stylesheet" href="{% static 'chart.js/Chart.min.css' %}">
+    <link rel="stylesheet" href="{% static 'wagtailanalytics/main.css' %}">
+{% endblock %}
+
+{% block extra_js %}
+    {% include "wagtailadmin/pages/_editor_js.html" %}
+    {{ site_switcher.media.js }}
+{% endblock %}
+
+{% block content %}
+    <header class="nice-padding hasform">
+      <div class="row header-title">
+          <div class="left">
+              <div class="col">
+                  <h1 class="icon icon-fa-tachometer">
+                      {% trans "Analytics" %}
+                      <span>{% trans "Dashboard" %}</span>
+                  </h1>
+              </div>
+          </div>
+          {% if site_switcher %}
+              <div class="right">
+                  <div class="field choice_field">
+                    <form method="get" class="setting-site-switch-form" id="settings-site-switch" novalidate>
+                      <label for="{{ site_switcher.site.id_for_label }}">
+                          Site:
+                      </label>
+                      {{ site_switcher.site }}
+                  </form>
+                  </div>
+              </div>
+          {% endif %}
+      </div>
+    </header>
+
+    <div class="nice-padding">
+      {% if id %}
+        <div class="col12 clearfix">
+            <h2>{% trans "Sessions" %}</h2>
+            <div id="sessions-container" class="chart"></div>
+        </div>
+        <div class="col6 clearfix">
+            <h2>{% trans "Top pages" %}</h2>
+            <table class="listing">
+              <thead>
+                <tr>
+                  <th scope="col">{% trans "Page" %}</th>
+                  <th scope="col">{% trans "Pageviews" %}</th>
+                </tr>
+                <tbody id="top-pages-container"></tbody>
+              </thead>
+            </table>
+        </div>
+        <div class="col6 clearfix">
+            <h2>{% trans "Top referrals" %}</h2>
+            <table class="listing">
+              <thead>
+                <tr>
+                  <th scope="col">{% trans "Source" %}</th>
+                  <th scope="col">{% trans "Pageviews" %}</th>
+                </tr>
+                <tbody id="top-referrers-container"></tbody>
+              </thead>
+            </table>
+        </div>
+      </div>
+
+      <script src="{% static 'chart.js/Chart.bundle.min.js' %}"></script>
+      <script src="{% static 'moment/moment.min.js' %}"></script>
+      <script src="{% static 'wagtailanalytics/main.js' %}"></script>
+
+      <script>
+        (function(w,d,s,g,js,fs){
+          g=w.gapi||(w.gapi={});g.analytics={q:[],ready:function(f){this.q.push(f);}};
+          js=d.createElement(s);fs=d.getElementsByTagName(s)[0];
+          js.src='https://apis.google.com/js/platform.js';
+          fs.parentNode.insertBefore(js,fs);js.onload=function(){g.load('analytics');};
+        }(window,document,'script'));
+      </script>
+
+    <script>
+      gapi.analytics.ready(function() {
+        getAPIToken('{{ config_url }}').then(function(accessToken){
+          gapi.analytics.auth.authorize({
+            'serverAuth': {
+              'access_token': accessToken
+            }
+          });
+
+          renderSessions('{{ id }}', 'sessions-container');
+          renderTopPages('{{ id }}', 'top-pages-container');
+          renderTopReferrers('{{ id }}', 'top-referrers-container');
+        })
+      });
+    </script>
+    {% else %}
+    <h2 role="alert">
+      {% trans "Sorry, no analytics available for" %} <em>{{ site.hostname }}</em>
+    </h2>
+    {% endif %}
+{% endblock %}

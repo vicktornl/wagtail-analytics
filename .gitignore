@@ -1,0 +1,13 @@
+# IDE
+.vscode/
+
+# Python
+build/
+dist/
+*.egg-info/
+*.pyc
+__pycache__/
+.pytest_cache/
+
+# OSX
+.DS_Store

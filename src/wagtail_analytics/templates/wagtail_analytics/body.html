@@ -1,0 +1,8 @@
+{% with settings.wagtail_analytics.AnalyticsSettings as settings %}
+{% if settings.google_tag_manager_enabled and settings.google_tag_manager_container_id %}
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id={{ settings.google_tag_manager_container_id }}"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
+{% endif %}
+{% endwith %}
