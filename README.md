@@ -4,6 +4,8 @@
 
 A set of analytical features for your Wagtail CMS.
 
+![Dashboard](./docs/dashboard.jpg)
+
 ## Features
 
 * Google Analytics dashboard
@@ -26,7 +28,7 @@ pip install wagtail-analytics
 
 Add `wagtail_analytics` to your `INSTALLED_APPS`
 
-```
+```python
 INSTALLED_APPS = [
     ...
     "wagtail_analytics",
@@ -41,7 +43,7 @@ manage.py migrate
 
 Include `wagtail_analytics/head.html` in the head of your templates (typically your `base.html` template)
 
-```
+```html
 <!DOCTYPE html>
 <html>
     <head>
@@ -51,8 +53,12 @@ Include `wagtail_analytics/head.html` in the head of your templates (typically y
 
 Include `wagtail_analytics/body.html` at the top of your body
 
-```
+```html
 <body>
     {% include "wagtail_analytics/body.html" %}
     ...
+```
+
+```python
+WAGTAIL_ANALYTICS_GA_KEY_CONTENT = '{"type":"service_account","project_id":"...'
 ```

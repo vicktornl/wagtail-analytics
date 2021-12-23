@@ -25,15 +25,13 @@
 
 <script>
   gapi.analytics.ready(function() {
-    console.log("Proberen token op te halen...")
     getAPIToken('{{ config_url }}').then(function(accessToken){
-      console.log("Token: " + accessToken);
       gapi.analytics.auth.authorize({
         'serverAuth': {
           'access_token': accessToken
         }
       });
-          renderSessions('{{ id }}', 'sessions-container');
+      renderSessions('{{ id }}', 'sessions-container');
   });
   });
 </script>

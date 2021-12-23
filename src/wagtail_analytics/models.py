@@ -57,9 +57,7 @@ class AnalyticsSettings(BaseSetting):
             heading=_("Google Analytics"),
         ),
         MultiFieldPanel(
-            [
-                FieldPanel("google_site_verification"),
-            ],
+            [FieldPanel("google_site_verification"),],
             heading=_("Google Search Console"),
         ),
     ]

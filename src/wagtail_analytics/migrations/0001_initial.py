@@ -26,8 +26,7 @@ class Migration(migrations.Migration):
                 (
                     "google_tag_manager_enabled",
                     models.BooleanField(
-                        default=False,
-                        verbose_name="Google Tag Manager Enabled",
+                        default=False, verbose_name="Google Tag Manager Enabled",
                     ),
                 ),
                 (
@@ -72,8 +71,6 @@ class Migration(migrations.Migration):
                     ),
                 ),
             ],
-            options={
-                "verbose_name": "Analytics",
-            },
+            options={"verbose_name": "Analytics",},
         ),
     ]
