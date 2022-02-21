@@ -7,6 +7,8 @@ from wagtail.contrib.settings.models import BaseSetting, register_setting
 
 @register_setting(icon="view")
 class AnalyticsSettings(BaseSetting):
+    id = models.AutoField(primary_key=True, auto_created=True, verbose_name="ID")
+
     google_tag_manager_enabled = models.BooleanField(
         verbose_name=_("Google Tag Manager Enabled"), default=False
     )
@@ -57,7 +59,9 @@ class AnalyticsSettings(BaseSetting):
             heading=_("Google Analytics"),
         ),
         MultiFieldPanel(
-            [FieldPanel("google_site_verification"),],
+            [
+                FieldPanel("google_site_verification"),
+            ],
             heading=_("Google Search Console"),
         ),
     ]
