@@ -3,7 +3,7 @@ from django.shortcuts import get_object_or_404, redirect
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from django.views import View
 from django.views.generic import TemplateView
 from wagtail.admin.edit_handlers import HelpPanel, ObjectList, TabbedInterface
