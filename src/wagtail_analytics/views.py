@@ -29,7 +29,10 @@ class SessionsPanel(HelpPanel):
         return mark_safe(
             render_to_string(
                 self.template,
-                {"id": None, "config_url": reverse("wagtail-analytics-config"),},
+                {
+                    "id": None,
+                    "config_url": reverse("wagtail-analytics-config"),
+                },
             )
         )
 
@@ -42,7 +45,9 @@ class AnalyticsPageMixin:
             ObjectList(Page.content_panels, heading=_("Content")),
             ObjectList(Page.promote_panels, heading=_("Promote")),
             ObjectList(
-                Page.settings_panels, heading=_("Settings"), classname="settings",
+                Page.settings_panels,
+                heading=_("Settings"),
+                classname="settings",
             ),
             ObjectList(analytics_panels, heading=_("Analytics")),
         ]

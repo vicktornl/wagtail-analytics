@@ -1,8 +1,9 @@
 import json
 
-from oauth2client.service_account import ServiceAccountCredentials
+from google.oauth2 import service_account
+from google.auth.transport.requests import Request
 
-SCOPE = "https://www.googleapis.com/auth/analytics.readonly"
+SCOPES = ["https://www.googleapis.com/auth/analytics.readonly"]
 
 
 def get_access_token_from_string(value: str) -> str:
@@ -10,9 +11,15 @@ def get_access_token_from_string(value: str) -> str:
 
     json_keyfile_dict = json.loads(value)
 
-    service_account_credentials = ServiceAccountCredentials.from_json_keyfile_dict(
-        json_keyfile_dict, SCOPE
+    service_account_credentials = service_account.Credentials.from_service_account_info(
+        json_keyfile_dict
     )
 
-    access_token = service_account_credentials.get_access_token().access_token
+    scoped_credentials = service_account_credentials.with_scopes(SCOPES)
+
+    if not scoped_credentials.token:
+        request = Request()
+        scoped_credentials.refresh(request)
+
+    access_token = scoped_credentials.token
     return access_token

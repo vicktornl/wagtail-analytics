@@ -16,7 +16,7 @@ A set of analytical features for your Wagtail CMS.
 - Python 3
 - Django >= 2
 - Wagtail >= 3
-- [oauth2client](https://pypi.org/project/oauth2client/)
+- [google-auth](https://pypi.org/project/google-auth/)
 
 ## Installation
 

@@ -1,11 +1,10 @@
 {% extends "wagtailadmin/base.html" %}
 
-{% load i18n static %}
+{% load i18n static wagtailadmin_tags %}
 
 {% block titletag %}{% trans "Analytics" %}{% endblock %}
 
 {% block extra_css %}
-    {% include "wagtailadmin/pages/_editor_css.html" %}
     {{ site_switcher.media.css }}
     <link rel="stylesheet" href="{% static 'chart.js/Chart.min.css' %}">
     <link rel="stylesheet" href="{% static 'wagtailanalytics/main.css' %}">
@@ -17,30 +16,17 @@
 {% endblock %}
 
 {% block content %}
-    <header class="nice-padding hasform">
-      <div class="row header-title">
-          <div class="left">
-              <div class="col">
-                  <h1 class="icon icon-fa-tachometer">
-                      {% trans "Analytics" %}
-                      <span>{% trans "Dashboard" %}</span>
-                  </h1>
-              </div>
-          </div>
-          {% if site_switcher %}
-              <div class="right">
-                  <div class="field choice_field">
-                    <form method="get" class="setting-site-switch-form" id="settings-site-switch" novalidate>
-                      <label for="{{ site_switcher.site.id_for_label }}">
-                          Site:
-                      </label>
-                      {{ site_switcher.site }}
-                  </form>
-                  </div>
-              </div>
-          {% endif %}
-      </div>
-    </header>
+    {% fragment as editing_actions %}
+        {% if site_switcher %}
+            <form method="get" id="settings-site-switch" novalidate>
+                <label for="{{ site_switcher.site.id_for_label }}">
+                    {% trans "Site" %}:
+                </label>
+                {{ site_switcher.site }}
+            </form>
+        {% endif %}
+    {% endfragment %}
+    {% include "wagtailadmin/shared/header.html" with title="Analytics" subtitle="Dashboard" extra_actions=editing_actions %}
 
     <div class="nice-padding">
       {% if id %}
