@@ -4,11 +4,19 @@ from django.utils.translation import pgettext_lazy
 from wagtail.admin.edit_handlers import FieldPanel, HelpPanel, MultiFieldPanel
 from wagtail.contrib.settings.models import BaseSetting, register_setting
 
+from wagtail_analytics import settings
+
 
 @register_setting(icon="view")
 class AnalyticsSettings(BaseSetting):
     id = models.AutoField(primary_key=True, auto_created=True, verbose_name="ID")
 
+    #: plausible
+    plausible_enabled = models.BooleanField(
+        verbose_name=_("Plausible Enabled"), default=False
+    )
+
+    #: google tag manager
     google_tag_manager_enabled = models.BooleanField(
         verbose_name=_("Google Tag Manager Enabled"), default=False
     )
@@ -19,6 +27,7 @@ class AnalyticsSettings(BaseSetting):
         blank=True,
     )
 
+    #: google analaytics
     google_analytics_enabled = models.BooleanField(
         verbose_name=_("Google Analytics Enabled"), default=False
     )
@@ -45,6 +54,12 @@ class AnalyticsSettings(BaseSetting):
     panels = [
         MultiFieldPanel(
             [
+                FieldPanel("plausible_enabled"),
+            ],
+            heading=_("Plausible"),
+        ),
+        MultiFieldPanel(
+            [
                 FieldPanel("google_tag_manager_enabled"),
                 FieldPanel("google_tag_manager_container_id"),
             ],
@@ -68,3 +83,7 @@ class AnalyticsSettings(BaseSetting):
 
     class Meta:
         verbose_name = _("Analytics")
+
+    @property
+    def plausible_base_url(self):
+        return settings.PLAUSIBLE_BASE_URL
