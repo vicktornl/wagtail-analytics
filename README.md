@@ -11,6 +11,12 @@ A set of analytical features for your Wagtail CMS.
 * Google Analytics dashboard
 * Google Analytics, Google Tag Manager and Site verification settings per site
 
+## Supported platforms
+
+* Plausible
+* Google Analytics
+* Google Tag Manager
+
 ## Requirements
 
 - Python 3
