@@ -1,7 +1,7 @@
 import json
 
-from google.oauth2 import service_account
 from google.auth.transport.requests import Request
+from google.oauth2 import service_account
 
 SCOPES = ["https://www.googleapis.com/auth/analytics.readonly"]
 
