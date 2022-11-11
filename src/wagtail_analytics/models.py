@@ -15,6 +15,9 @@ class AnalyticsSettings(BaseSetting):
     plausible_enabled = models.BooleanField(
         verbose_name=_("Plausible Enabled"), default=False
     )
+    plausible_domain = models.CharField(
+        verbose_name=_("Plausible Domain"), max_length=255, default="plausible.io"
+    )
 
     #: google tag manager
     google_tag_manager_enabled = models.BooleanField(
@@ -55,6 +58,7 @@ class AnalyticsSettings(BaseSetting):
         MultiFieldPanel(
             [
                 FieldPanel("plausible_enabled"),
+                FieldPanel("plausible_domain"),
             ],
             heading=_("Plausible"),
         ),
@@ -83,7 +87,3 @@ class AnalyticsSettings(BaseSetting):
 
     class Meta:
         verbose_name = _("Analytics")
-
-    @property
-    def plausible_base_url(self):
-        return settings.PLAUSIBLE_BASE_URL

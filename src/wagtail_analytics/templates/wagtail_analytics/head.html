@@ -1,6 +1,6 @@
 {% with settings.wagtail_analytics.AnalyticsSettings as settings %}
 {% if settings.plausible_enabled %}
-<script defer data-domain="{{ settings.site.hostname }}" src="{{ settings.plausible_base_url }}/js/script.js"></script>
+<script defer data-domain="{{ settings.site.hostname }}" src="https://{{ settings.plausible_domain }}/js/script.js"></script>
 {% endif %}
 {% if settings.google_tag_manager_enabled and settings.google_tag_manager_container_id %}
 <!-- Google Tag Manager -->
