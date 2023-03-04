@@ -1,78 +1,81 @@
-"""Hello Analytics Reporting API V4."""
+from wagtail_analytics.lib.analytics import (
+    GoogleAnalyticsClient,
+    GoogleRequestData,
+    GoogleRequestDataList,
+)
+import os
+import ipdb
+from datetime import date, timedelta
 
-from googleapiclient.discovery import build
-from oauth2client.service_account import ServiceAccountCredentials
+# for this to work u need a credentials json for the api and set the env variable to the path of the json
+# export GOOGLE_APPLICATION_CREDENTIALS="[PATH]"
+def make_request_to_google_for_wagtail(property_id):
+
+    visitors_this_week = GoogleRequestData(
+        name="visitors_this_week",
+        property_id=property_id,
+        dimensions=["country"],
+        metrics=["activeUsers"],
+        start_date="7daysAgo",
+        end_date="today",
+    )
+    visitors_last_week = GoogleRequestData(
+        name="visitors_last_week",
+        property_id=property_id,
+        dimensions=["country"],
+        metrics=["activeUsers"],
+        start_date="14daysAgo",
+        end_date="7daysAgo",
+    )
+    most_visited_pages_this_week = GoogleRequestData(
+        name="most_visited_pages_this_week",
+        property_id=property_id,
+        dimensions=["pagePath"],
+        metrics=["activeUsers"],
+        start_date="7daysAgo",
+        end_date="today",
+    )
+    most_visited_pages_last_week = GoogleRequestData(
+        name="most_visited_pages_last_week",
+        property_id=property_id,
+        dimensions=["pagePath"],
+        metrics=["activeUsers"],
+        start_date="14daysAgo",
+        end_date="7daysAgo",
+    )
+    top_sources_this_week = GoogleRequestData(
+        name="top_sources_this_week",
+        property_id=property_id,
+        dimensions=["firstUserSource"],
+        metrics=["activeUsers"],
+        start_date="7daysAgo",
+        end_date="today",
+    )
+    top_sources_last_week = GoogleRequestData(
+        name="top_sources_last_week",
+        property_id=property_id,
+        dimensions=["firstUserSource"],
+        metrics=["activeUsers"],
+        start_date="14daysAgo",
+        end_date="7daysAgo",
+    )
+
+    wagtail_analytics_request = GoogleRequestDataList(
+        requests=[
+            visitors_this_week,
+            visitors_last_week,
+            most_visited_pages_this_week,
+            most_visited_pages_last_week,
+            top_sources_this_week,
+            top_sources_last_week,
+        ]
+    )
+
+    request = GoogleAnalyticsClient().get_report(wagtail_analytics_request)
+
+    return request
 
 
-SCOPES = ['https://www.googleapis.com/auth/analytics.readonly']
-KEY_FILE_LOCATION = '<REPLACE_WITH_JSON_FILE>'
-VIEW_ID = '<REPLACE_WITH_VIEW_ID>'
+data = make_request_to_google_for_wagtail("279726693")
 
-
-def initialize_analyticsreporting():
-  """Initializes an Analytics Reporting API V4 service object.
-
-  Returns:
-    An authorized Analytics Reporting API V4 service object.
-  """
-  credentials = ServiceAccountCredentials.from_json_keyfile_name(
-      KEY_FILE_LOCATION, SCOPES)
-
-  # Build the service object.
-  analytics = build('analyticsreporting', 'v4', credentials=credentials)
-
-  return analytics
-
-
-def get_report(analytics):
-  """Queries the Analytics Reporting API V4.
-
-  Args:
-    analytics: An authorized Analytics Reporting API V4 service object.
-  Returns:
-    The Analytics Reporting API V4 response.
-  """
-  return analytics.reports().batchGet(
-      body={
-        'reportRequests': [
-        {
-          'viewId': VIEW_ID,
-          'dateRanges': [{'startDate': '7daysAgo', 'endDate': 'today'}],
-          'metrics': [{'expression': 'ga:sessions'}],
-          'dimensions': [{'name': 'ga:country'}]
-        }]
-      }
-  ).execute()
-
-
-def print_response(response):
-  """Parses and prints the Analytics Reporting API V4 response.
-
-  Args:
-    response: An Analytics Reporting API V4 response.
-  """
-  for report in response.get('reports', []):
-    columnHeader = report.get('columnHeader', {})
-    dimensionHeaders = columnHeader.get('dimensions', [])
-    metricHeaders = columnHeader.get('metricHeader', {}).get('metricHeaderEntries', [])
-
-    for row in report.get('data', {}).get('rows', []):
-      dimensions = row.get('dimensions', [])
-      dateRangeValues = row.get('metrics', [])
-
-      for header, dimension in zip(dimensionHeaders, dimensions):
-        print(header + ': ', dimension)
-
-      for i, values in enumerate(dateRangeValues):
-        print('Date range:', str(i))
-        for metricHeader, value in zip(metricHeaders, values.get('values')):
-          print(metricHeader.get('name') + ':', value)
-
-
-def main():
-  analytics = initialize_analyticsreporting()
-  response = get_report(analytics)
-  print_response(response)
-
-if __name__ == '__main__':
-  main()
+ipdb.set_trace()
