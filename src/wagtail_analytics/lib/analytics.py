@@ -79,17 +79,17 @@ class BaseAnalyticsClient(ABC):
     def create_request(
         self, request_data: Union[PlausibleRequestData, GoogleRequestData, Any]
     ):
-        raise NotImplementedError("Subclasses must implement this method")
+        pass
 
     @abstractmethod
     def send_request(self, request: Union[PlausibleRequest, GoogleRequestData, Any]):
-        raise NotImplementedError("Subclasses must implement this method")
+        pass
 
     @abstractmethod
     def get_report(
         self, request_data: Union[PlausibleRequestData, GoogleRequestData, Any]
     ):
-        raise NotImplementedError("Subclasses must implement this method")
+        pass
 
 
 class PlausibleAnalyticsClient(BaseAnalyticsClient):
@@ -182,38 +182,19 @@ class WagtailAnalyticsReporter:
         if isinstance(self.client, PlausibleAnalyticsClient):
             for request_data in request_data_list.requests:
                 self.reports.append(self.client.get_report(request_data))
-            return self.mapper_plausible(self.reports)
+                self.wagtail_report = PlausibleAnalyticsReportMapper().map_reports(
+                    self.reports
+                )
+            return self.wagtail_report
 
         elif isinstance(self.client, GoogleAnalyticsClient):
             for request_data in request_data_list.requests:
                 self.reports.append(self.client.get_report(request_data))
             return self.mapper_google_analytics(self.reports)
 
-    def mapper_plausible(self, reports: List[Report]):
-        wagtail_report = Wagtail_Analytics_Report(0, 0, [], [], [], [])
-        for report in reports:
-            if report.name == "visitors_this_week":
-                wagtail_report.visitors_this_week = report.data["results"]["visitors"][
-                    "value"
-                ]
-            elif report.name == "visitors_last_week":
-                wagtail_report.visitors_last_week = report.data["results"]["visitors"][
-                    "value"
-                ]
-            elif report.name == "most_visited_pages_this_week":
-                wagtail_report.most_visited_pages_this_week = report.data["results"]
-            elif report.name == "most_visited_pages_last_week":
-                wagtail_report.most_visited_pages_last_week = report.data["results"]
-            elif report.name == "top_sources_this_week":
-                wagtail_report.top_sources_this_week = report.data["results"]
-            elif report.name == "top_sources_last_week":
-                wagtail_report.top_sources_last_week = report.data["results"]
-        return wagtail_report
-
     def mapper_google_analytics(self, reports: List[Report]):
         wagtail_report = Wagtail_Analytics_Report(0, 0, [], [], [], [])
         for report in reports:
-            ipdb.set_trace()
             if report.name == "visitors_this_week":
                 for row in report.data.rows:
                     wagtail_report.visitors_this_week += int(row.metric_values[0].value)
@@ -253,3 +234,65 @@ class WagtailAnalyticsReporter:
                         }
                     )
         return wagtail_report
+
+
+@abstractmethod
+class PlausibleMapper(ABC):
+    def map_report(self, report: Report, wagtail_report: Wagtail_Analytics_Report):
+        pass
+
+
+class VisitorsThisWeekMapper(PlausibleMapper):
+    def map_report(self, report: Report, wagtail_report: Wagtail_Analytics_Report):
+        wagtail_report.visitors_this_week = report.data["results"]["visitors"]["value"]
+
+
+class VisitorsLastWeekMapper(PlausibleMapper):
+    def map_report(self, report: Report, wagtail_report: Wagtail_Analytics_Report):
+        wagtail_report.visitors_last_week = report.data["results"]["visitors"]["value"]
+
+
+class MostVisitedPagesThisWeekMapper(PlausibleMapper):
+    def map_report(self, report: Report, wagtail_report: Wagtail_Analytics_Report):
+        wagtail_report.most_visited_pages_this_week = report.data["results"]
+
+
+class MostVisitedPagesLastWeekMapper(PlausibleMapper):
+    def map_report(self, report: Report, wagtail_report: Wagtail_Analytics_Report):
+        wagtail_report.most_visited_pages_last_week = report.data["results"]
+
+
+class TopSourcesThisWeekMapper(PlausibleMapper):
+    def map_report(self, report: Report, wagtail_report: Wagtail_Analytics_Report):
+        wagtail_report.top_sources_this_week = report.data["results"]
+
+
+class TopSourcesLastWeekMapper(PlausibleMapper):
+    def map_report(self, report: Report, wagtail_report: Wagtail_Analytics_Report):
+        wagtail_report.top_sources_last_week = report.data["results"]
+
+
+class PlausibleMapperFactory:
+    def __init__(self):
+        self.mappers = {
+            "visitors_this_week": VisitorsThisWeekMapper(),
+            "visitors_last_week": VisitorsLastWeekMapper(),
+            "most_visited_pages_this_week": MostVisitedPagesThisWeekMapper(),
+            "most_visited_pages_last_week": MostVisitedPagesLastWeekMapper(),
+            "top_sources_this_week": TopSourcesThisWeekMapper(),
+            "top_sources_last_week": TopSourcesLastWeekMapper(),
+        }
+
+    def get_mapper(self, report_name: str):
+        return self.mappers.get(report_name, None)
+
+
+class PlausibleAnalyticsReportMapper:
+    def __init__(self):
+        self.wagtail_report = Wagtail_Analytics_Report(0, 0, [], [], [], [])
+
+    def map_reports(self, reports: List[Report]):
+        for report in reports:
+            mapper = PlausibleMapperFactory().get_mapper(report.name)
+            mapper.map_report(report, self.wagtail_report)
+        return self.wagtail_report
