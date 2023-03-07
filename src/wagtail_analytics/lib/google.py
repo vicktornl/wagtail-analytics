@@ -2,11 +2,14 @@ from wagtail_analytics.lib.analytics import (
     GoogleAnalyticsClient,
     GoogleRequestData,
     GoogleRequestDataList,
+    WagtailAnalyticsReporter,
 )
 import os
 import ipdb
 from datetime import date, timedelta
+import dataclasses
 
+property_id = "279726693"
 # for this to work u need a credentials json for the api and set the env variable to the path of the json
 # export GOOGLE_APPLICATION_CREDENTIALS="[PATH]"
 def make_request_to_google_for_wagtail(property_id):
@@ -19,11 +22,9 @@ def make_request_to_google_for_wagtail(property_id):
         start_date="7daysAgo",
         end_date="today",
     )
-    visitors_last_week = GoogleRequestData(
+    visitors_last_week = dataclasses.replace(
+        visitors_this_week,
         name="visitors_last_week",
-        property_id=property_id,
-        dimensions=["country"],
-        metrics=["activeUsers"],
         start_date="14daysAgo",
         end_date="7daysAgo",
     )
@@ -35,11 +36,9 @@ def make_request_to_google_for_wagtail(property_id):
         start_date="7daysAgo",
         end_date="today",
     )
-    most_visited_pages_last_week = GoogleRequestData(
+    most_visited_pages_last_week = dataclasses.replace(
+        most_visited_pages_this_week,
         name="most_visited_pages_last_week",
-        property_id=property_id,
-        dimensions=["pagePath"],
-        metrics=["activeUsers"],
         start_date="14daysAgo",
         end_date="7daysAgo",
     )
@@ -51,11 +50,9 @@ def make_request_to_google_for_wagtail(property_id):
         start_date="7daysAgo",
         end_date="today",
     )
-    top_sources_last_week = GoogleRequestData(
+    top_sources_last_week = dataclasses.replace(
+        top_sources_this_week,
         name="top_sources_last_week",
-        property_id=property_id,
-        dimensions=["firstUserSource"],
-        metrics=["activeUsers"],
         start_date="14daysAgo",
         end_date="7daysAgo",
     )
@@ -71,11 +68,12 @@ def make_request_to_google_for_wagtail(property_id):
         ]
     )
 
-    request = GoogleAnalyticsClient().get_wagtail_report(wagtail_analytics_request)
+    client = GoogleAnalyticsClient()
+    reporter = WagtailAnalyticsReporter(client)
+    response = reporter.get_report(wagtail_analytics_request)
+    return response
 
-    return request
 
-
-data = make_request_to_google_for_wagtail("279726693")
+data = make_request_to_google_for_wagtail(property_id)
 
 ipdb.set_trace()
