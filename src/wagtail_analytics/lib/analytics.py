@@ -189,7 +189,7 @@ class WagtailAnalyticsReporter:
                 self.reports.append(self.client.get_report(request_data))
                 self.wagtail_report = PlausibleAnalyticsReportMapper(
                     self.reports, self.wagtail_report
-                ).map_reports(self.reports)
+                ).map_reports()
             return self.wagtail_report
 
         elif isinstance(self.client, GoogleAnalyticsClient):
@@ -197,5 +197,5 @@ class WagtailAnalyticsReporter:
                 self.reports.append(self.client.get_report(request_data))
                 self.wagtail_report = GoogleAnalyticsReportMapper(
                     self.reports, self.wagtail_report
-                ).map_reports(self.reports)
+                ).map_reports()
             return self.wagtail_report

@@ -60,8 +60,8 @@ class PlausibleAnalyticsReportMapper:
         self.reports = reports
         self.wagtail_report = wagtail_report
 
-    def map_reports(self, reports):
-        for report in reports:
+    def map_reports(self):
+        for report in self.reports:
             mapper = PlausibleMapperFactory().get_mapper(report.name)
             mapper.map_report(report, self.wagtail_report)
         return self.wagtail_report
