@@ -2,10 +2,8 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Union, Literal
 from django.core.exceptions import ImproperlyConfigured
 import requests
-import ipdb
 from wagtail_analytics.lib.mappers.plausiblemapper import PlausibleAnalyticsReportMapper
 from wagtail_analytics.lib.mappers.googlemappers import GoogleAnalyticsReportMapper
-from datetime import date, timedelta
 from google.analytics.data_v1beta import BetaAnalyticsDataClient
 from google.analytics.data_v1beta.types import (
     DateRange,

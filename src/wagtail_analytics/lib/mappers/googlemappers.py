@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
 
-# this is a class that can be used to map reports from google analytics to wagtail analytics reports
+# this is a class that can be used to map reports from plausible to a wagtail analytics report object
 
 
 class GoogleAnalyticsMapper(ABC):
@@ -81,6 +81,9 @@ class GoogleAnalyticsMapperFactory:
         return self.mappers.get(report_name, None)
 
 
+# This is the class that is used to map the reports from plausible to wagtail analytics reports
+# It takes a list of report objects and a wagtail analytics report object
+# It then maps the reports to the wagtail analytics report object
 class GoogleAnalyticsReportMapper:
     def __init__(self, reports, wagtail_report):
         self.reports = reports
