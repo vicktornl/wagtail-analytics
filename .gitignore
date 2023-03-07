@@ -1,5 +1,6 @@
 # IDE
 .vscode/
+.env
 
 # Python
 build/
