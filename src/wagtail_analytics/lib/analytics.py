@@ -2,7 +2,6 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Union, Literal
 from django.core.exceptions import ImproperlyConfigured
 import requests
-import os
 import ipdb
 from datetime import date, timedelta
 from google.analytics.data_v1beta import BetaAnalyticsDataClient
@@ -27,9 +26,9 @@ class PlausibleRequestData:
     ] = field(default="visitors")
     period: str = field(default="30d")
     date: str = field(default="today")
-    property: Optional[str] = None
-    filters: Optional[str] = None
-    limit: Optional[int] = None
+    property: Optional[str] = field(default=None)
+    filters: Optional[str] = field(default=None)
+    limit: Optional[int] = field(default=None)
 
 
 @dataclass
@@ -60,7 +59,7 @@ class GoogleRequestDataList:
 
 
 @dataclass
-class ReportData:
+class Report:
     name: str
     data: List[Dict[str, Any]]
 
@@ -83,22 +82,14 @@ class BaseAnalyticsClient(ABC):
         raise NotImplementedError("Subclasses must implement this method")
 
     @abstractmethod
-    def do_request():
+    def send_request(self, request: Union[PlausibleRequest, GoogleRequestData, Any]):
         raise NotImplementedError("Subclasses must implement this method")
 
     @abstractmethod
     def get_report(
         self, request_data: Union[PlausibleRequestData, GoogleRequestData, Any]
     ):
-        return ReportData(
-            request_data.name, self.do_request(self.create_request(request_data))
-        )
-
-    @abstractmethod
-    def get_wagtail_report(
-        self, request_data: Union[PlausibleRequestDataList, GoogleRequestDataList, Any]
-    ):
-        return Wagtail_Analytics_Report(0, 0, [], [], [], [])
+        raise NotImplementedError("Subclasses must implement this method")
 
 
 class PlausibleAnalyticsClient(BaseAnalyticsClient):
@@ -122,48 +113,17 @@ class PlausibleAnalyticsClient(BaseAnalyticsClient):
         request = PlausibleRequest(endpoint, params, headers)
         return request
 
-    def do_request(self, request: PlausibleRequest):
+    def send_request(self, request: PlausibleRequest):
         url = f"{request.url}"
         response = requests.get(url, params=request.params, headers=request.headers)
         if response.status_code != 200:
-            error_data = {
-                "error_code": response.status_code,
-                "error_message": response.text,
-            }
-            raise ImproperlyConfigured(error_data)
+            raise ImproperlyConfigured(
+                f"Error while requesting {request} error: {response.status_code}"
+            )
         return response.json()
 
     def get_report(self, requests: PlausibleRequestData):
-        report = ReportData(
-            requests.name, self.do_request(self.create_request(requests))
-        )
-        return report
-
-    def get_wagtail_report(self, requests: PlausibleRequestDataList):
-        report = Wagtail_Analytics_Report(0, 0, [], [], [], [])
-        for request in requests.requests:
-            if request.name == "visitors_this_week":
-                response_data = self.do_request(self.create_request(request))
-                report.visitors_this_week = response_data["results"]["visitors"][
-                    "value"
-                ]
-            elif request.name == "visitors_last_week":
-                response_data = self.do_request(self.create_request(request))
-                report.visitors_last_week = response_data["results"]["visitors"][
-                    "value"
-                ]
-            elif request.name == "most_visited_pages_this_week":
-                response_data = self.do_request(self.create_request(request))
-                report.most_visited_pages_this_week = response_data["results"]
-            elif request.name == "most_visited_pages_last_week":
-                response_data = self.do_request(self.create_request(request))
-                report.most_visited_pages_last_week = response_data["results"]
-            elif request.name == "top_sources_this_week":
-                response_data = self.do_request(self.create_request(request))
-                report.top_sources_this_week = response_data["results"]
-            elif request.name == "top_sources_last_week":
-                response_data = self.do_request(self.create_request(request))
-                report.top_sources_last_week = response_data["results"]
+        report = Report(requests.name, self.send_request(self.create_request(requests)))
         return report
 
 
@@ -185,62 +145,111 @@ class GoogleAnalyticsClient(BaseAnalyticsClient):
         )
         return request
 
-    def do_request(self, request):
-        client = BetaAnalyticsDataClient()
-        response = client.run_report(request)
-        return response
+    def send_request(self, request: RunReportRequest):
+        try:
+            client = BetaAnalyticsDataClient()
+            response = client.run_report(request)
+            return response
+        except Exception as e:
+            raise ImproperlyConfigured(
+                f"Error while requesting {request} error: {e}"
+            ) from e
 
     def get_report(self, request_data: GoogleRequestData):
-        report = ReportData(
-            request_data.name, self.do_request(self.create_request(request_data))
+        report = Report(
+            request_data.name, self.send_request(self.create_request(request_data))
         )
         return report
 
-    def get_wagtail_report(self, request_data: GoogleRequestDataList):
-        report = Wagtail_Analytics_Report(0, 0, [], [], [], [])
-        for request in request_data.requests:
-            if request.name == "visitors_this_week":
-                response_data = self.do_request(self.create_request(request))
-                for row in response_data.rows:
-                    report.visitors_this_week = row.metric_values[0].value
-            elif request.name == "visitors_last_week":
-                response_data = self.do_request(self.create_request(request))
-                for row in response_data.rows:
-                    report.visitors_last_week = row.metric_values[0].value
-            elif request.name == "most_visited_pages_this_week":
-                response_data = self.do_request(self.create_request(request))
-                for row in response_data.rows:
-                    report.most_visited_pages_this_week.append(
+
+# this is a class that can be used to get reports from both plausible and google analytics
+# it can be used like this
+# client = PlausibleAnalyticsClient(api_key)
+# reporter = WagtailAnalyticsReporter(client)
+# request_data_list = PlausibleRequestDataList(requests=[request_data1, request_data2])
+# reporter.get_report(request_data_list)
+class WagtailAnalyticsReporter:
+    reports: List[Report]
+    wagtail_report: Wagtail_Analytics_Report
+
+    def __init__(self, client: Union[PlausibleAnalyticsClient, GoogleAnalyticsClient]):
+        self.client = client
+        self.reports = []
+
+    def get_report(
+        self, request_data_list: Union[PlausibleRequestDataList, GoogleRequestDataList]
+    ):
+        if isinstance(self.client, PlausibleAnalyticsClient):
+            for request_data in request_data_list.requests:
+                self.reports.append(self.client.get_report(request_data))
+            return self.mapper_plausible(self.reports)
+
+        elif isinstance(self.client, GoogleAnalyticsClient):
+            for request_data in request_data_list.requests:
+                self.reports.append(self.client.get_report(request_data))
+            return self.mapper_google_analytics(self.reports)
+
+    def mapper_plausible(self, reports: List[Report]):
+        wagtail_report = Wagtail_Analytics_Report(0, 0, [], [], [], [])
+        for report in reports:
+            if report.name == "visitors_this_week":
+                wagtail_report.visitors_this_week = report.data["results"]["visitors"][
+                    "value"
+                ]
+            elif report.name == "visitors_last_week":
+                wagtail_report.visitors_last_week = report.data["results"]["visitors"][
+                    "value"
+                ]
+            elif report.name == "most_visited_pages_this_week":
+                wagtail_report.most_visited_pages_this_week = report.data["results"]
+            elif report.name == "most_visited_pages_last_week":
+                wagtail_report.most_visited_pages_last_week = report.data["results"]
+            elif report.name == "top_sources_this_week":
+                wagtail_report.top_sources_this_week = report.data["results"]
+            elif report.name == "top_sources_last_week":
+                wagtail_report.top_sources_last_week = report.data["results"]
+        return wagtail_report
+
+    def mapper_google_analytics(self, reports: List[Report]):
+        wagtail_report = Wagtail_Analytics_Report(0, 0, [], [], [], [])
+        for report in reports:
+            ipdb.set_trace()
+            if report.name == "visitors_this_week":
+                for row in report.data.rows:
+                    wagtail_report.visitors_this_week += int(row.metric_values[0].value)
+            elif report.name == "visitors_last_week":
+                for row in report.data.rows:
+                    wagtail_report.visitors_last_week += int(row.metric_values[0].value)
+            elif report.name == "most_visited_pages_this_week":
+                for row in report.data.rows:
+                    wagtail_report.most_visited_pages_this_week.append(
                         {
                             "page": row.dimension_values[0].value,
                             "visitors": row.metric_values[0].value,
                         }
                     )
-            elif request.name == "most_visited_pages_last_week":
-                response_data = self.do_request(self.create_request(request))
-                for row in response_data.rows:
-                    report.most_visited_pages_last_week.append(
+            elif report.name == "most_visited_pages_last_week":
+                for row in report.data.rows:
+                    wagtail_report.most_visited_pages_last_week.append(
                         {
                             "page": row.dimension_values[0].value,
                             "visitors": row.metric_values[0].value,
                         }
                     )
-            elif request.name == "top_sources_this_week":
-                response_data = self.do_request(self.create_request(request))
-                for row in response_data.rows:
-                    report.top_sources_this_week.append(
+            elif report.name == "top_sources_this_week":
+                for row in report.data.rows:
+                    wagtail_report.top_sources_this_week.append(
                         {
                             "source": row.dimension_values[0].value,
                             "visitors": row.metric_values[0].value,
                         }
                     )
-            elif request.name == "top_sources_last_week":
-                response_data = self.do_request(self.create_request(request))
-                for row in response_data.rows:
-                    report.top_sources_last_week.append(
+            elif report.name == "top_sources_last_week":
+                for row in report.data.rows:
+                    wagtail_report.top_sources_last_week.append(
                         {
                             "source": row.dimension_values[0].value,
                             "visitors": row.metric_values[0].value,
                         }
                     )
-        return report
+        return wagtail_report
