@@ -1,9 +1,11 @@
+from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Union, Literal
-from django.core.exceptions import ImproperlyConfigured
+from datetime import date, datetime, timedelta
+from typing import Any, Dict, List, Literal, Optional, Tuple, Union
+
+import ipdb
 import requests
-from wagtail_analytics.lib.mappers.plausiblemapper import PlausibleAnalyticsReportMapper
-from wagtail_analytics.lib.mappers.googlemappers import GoogleAnalyticsReportMapper
+from django.core.exceptions import ImproperlyConfigured
 from google.analytics.data_v1beta import BetaAnalyticsDataClient
 from google.analytics.data_v1beta.types import (
     DateRange,
@@ -11,189 +13,208 @@ from google.analytics.data_v1beta.types import (
     Metric,
     RunReportRequest,
 )
-from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Union, Literal
+
+today = date.today()
+start_this_week = today - timedelta(days=today.weekday())
+end_this_week = start_this_week + timedelta(days=6)
+start_last_week = start_this_week - timedelta(days=7)
+end_last_week = end_this_week - timedelta(days=7)
+this_week_range = f"{start_this_week},{end_this_week}"
+last_week_range = f"{start_last_week},{end_last_week}"
 
 
 @dataclass
-class PlausibleRequestData:
-    name: str
-    site_id: str
-    type: Literal["aggregate", "breakdown", "realtime", "timeseries"] = field(
-        default="aggregate"
-    )
-    metrics: Literal[
-        "visitors", "pageviews", "bounce_rate", "visits", "events"
-    ] = field(default="visitors")
-    period: str = field(default="30d")
-    date: str = field(default="today")
-    property: Optional[str] = field(default=None)
-    filters: Optional[str] = field(default=None)
-    limit: Optional[int] = field(default=None)
-
-
-@dataclass
-class PlausibleRequestDataList:
-    requests: List[PlausibleRequestData]
-
-
-@dataclass
-class PlausibleRequest:
+class TopPage:
     url: str
-    params: Dict[str, Any]
-    headers: Dict[str, Any]
+    pageviews: int
 
 
 @dataclass
-class GoogleRequestData:
+class TopSource:
     name: str
-    property_id: str
-    dimensions: List[str]
-    metrics: List[str]
-    start_date: str
-    end_date: str
-
-
-@dataclass
-class GoogleRequestDataList:
-    requests: List[GoogleRequestData]
+    pageviews: int
 
 
 @dataclass
 class Report:
-    name: str
-    data: List[Dict[str, Any]]
+    visitors_this_week: List[Tuple[datetime, int]]
+    visitors_last_week: List[Tuple[datetime, int]]
+    top_pages: List[TopPage]
+    top_sources: List[TopSource]
 
 
-@dataclass
-class Wagtail_Analytics_Report:
-    visitors_this_week: int
-    visitors_last_week: int
-    most_visited_pages_last_week: List[Dict[str, Any]]
-    most_visited_pages_this_week: List[Dict[str, Any]]
-    top_sources_this_week: List[Dict[str, Any]]
-    top_sources_last_week: List[Dict[str, Any]]
-
-
-class BaseAnalyticsClient(ABC):
-    @abstractmethod
-    def create_request(
-        self, request_data: Union[PlausibleRequestData, GoogleRequestData, Any]
-    ):
-        pass
-
-    @abstractmethod
-    def send_request(self, request: Union[PlausibleRequest, GoogleRequestData, Any]):
-        pass
-
-    @abstractmethod
-    def get_report(
-        self, request_data: Union[PlausibleRequestData, GoogleRequestData, Any]
-    ):
-        pass
-
-
-class PlausibleAnalyticsClient(BaseAnalyticsClient):
-    base_url = "https://plausible.io/api/v1/stats/"
-
-    def __init__(self, api_key: str):
-        self.api_key = api_key
-
-    def create_request(self, request_data: PlausibleRequestData):
-        endpoint = self.base_url + request_data.type + "?"
-        params = {
-            "site_id": request_data.site_id,
-            "filters": request_data.filters,
-            "period": request_data.period,
-            "metrics": request_data.metrics,
-            "property": request_data.property,
-            "date": request_data.date,
-            "limit": request_data.limit,
-        }
-        headers = {"Authorization": f"Bearer {self.api_key}"}
-        request = PlausibleRequest(endpoint, params, headers)
-        return request
-
-    def send_request(self, request: PlausibleRequest):
-        url = f"{request.url}"
-        response = requests.get(url, params=request.params, headers=request.headers)
-        if response.status_code != 200:
-            raise ImproperlyConfigured(
-                f"Error while requesting {request} error: {response.status_code}"
-            )
-        return response.json()
-
-    def get_report(self, requests: PlausibleRequestData):
-        report = Report(requests.name, self.send_request(self.create_request(requests)))
+class APIClient(ABC):
+    def get_report(self) -> Report:
+        visitors_this_week = self.get_visitors_this_week()
+        visitors_last_week = self.get_visitors_last_week()
+        top_pages = self.get_top_pages()
+        top_sources = self.get_top_sources()
+        report = Report(
+            visitors_this_week=visitors_this_week,
+            visitors_last_week=visitors_last_week,
+            top_pages=top_pages,
+            top_sources=top_sources,
+        )
         return report
+
+    @abstractmethod
+    def get_visitors_this_week(self) -> List[Tuple[datetime, int]]:
+        return []
+
+    @abstractmethod
+    def get_visitors_last_week(self) -> List[Tuple[datetime, int]]:
+        return []
+
+    @abstractmethod
+    def get_top_pages(self) -> List[TopPage]:
+        return []
+
+    @abstractmethod
+    def get_top_sources(self) -> List[TopSource]:
+        return []
+
+
+class PlausibleAPIClient(APIClient):
+    base_url = "https://plausible.io/api/v1/stats"
+
+    def __init__(self, site_id, api_key) -> None:
+        self.site_id = site_id
+        self.api_key = api_key
+        self.headers = {"Authorization": f"Bearer {self.api_key}"}
+
+    def get_visitors_this_week(self) -> List[Tuple[datetime, int]]:
+        visitors_this_week = []
+
+        url_this_week = "{base_url}/timeseries?date={range}&site_id={site_id}&period=custom&metrics=visitors".format(
+            range=this_week_range, base_url=self.base_url, site_id=self.site_id
+        )
+        visitor_this_week_response = requests.get(
+            url_this_week, headers=self.headers
+        ).json()
+        for day in visitor_this_week_response["results"]:
+            visitors_this_week.append((day["date"], day["visitors"]))
+
+        return visitors_this_week
+
+    def get_visitors_last_week(self) -> List[Tuple[datetime, int]]:
+        visitors_last_week = []
+
+        url_last_week = "{base_url}/timeseries?date={range}&site_id={site_id}&period=custom&metrics=visitors".format(
+            range=last_week_range, base_url=self.base_url, site_id=self.site_id
+        )
+        visitor_last_week_response = requests.get(
+            url_last_week, headers=self.headers
+        ).json()
+        for day in visitor_last_week_response["results"]:
+            visitors_last_week.append((day["date"], day["visitors"]))
+
+        return visitors_last_week
+
+    def get_top_pages(self) -> List[TopPage]:
+
+        top_pages = []
+
+        url_top_pages = "{base_url}/breakdown?limit=10&date={range}&site_id={site_id}&period=custom&metrics=visitors&property=event:page".format(
+            range=this_week_range, base_url=self.base_url, site_id=self.site_id
+        )
+        response = requests.get(url_top_pages, headers=self.headers).json()
+        for page in response["results"]:
+            top_pages.append(TopPage(url=page["page"], pageviews=page["visitors"]))
+        return top_pages
+
+    def get_top_sources(self) -> List[TopSource]:
+
+        top_sources = []
+
+        url_top_sources = "{base_url}/breakdown?limit=10&date={range}&site_id={site_id}&period=custom&metrics=visitors&property=visit:source".format(
+            range=this_week_range, base_url=self.base_url, site_id=self.site_id
+        )
+        response = requests.get(url_top_sources, headers=self.headers).json()
+        for source in response["results"]:
+            top_sources.append(
+                TopSource(name=source["source"], pageviews=source["visitors"])
+            )
+        return top_sources
+
+    def get_report(self) -> Report:
+        return super().get_report()
 
 
 # for this to work u need a credentials json for the api and set the env variable to the path of the json
 # export GOOGLE_APPLICATION_CREDENTIALS="[PATH]"
-class GoogleAnalyticsClient(BaseAnalyticsClient):
-    def create_request(self, request_data: GoogleRequestData):
-        request = RunReportRequest(
-            property=f"properties/{request_data.property_id}",
-            dimensions=[
-                Dimension(name=dimension) for dimension in request_data.dimensions
-            ],
-            metrics=[Metric(name=metric) for metric in request_data.metrics],
-            date_ranges=[
-                DateRange(
-                    start_date=request_data.start_date, end_date=request_data.end_date
+class GoogleAnalyticsAPIClient(APIClient):
+    client = BetaAnalyticsDataClient()
+
+    def __init__(self, propery_id) -> None:
+        self.property_id = propery_id
+
+    def get_visitors_this_week(self) -> List[Tuple[datetime, int]]:
+        visitors_this_week = []
+
+        visitors_this_week_request = RunReportRequest(
+            property="properties/" + self.property_id,
+            date_ranges=[DateRange(start_date="7daysAgo", end_date="today")],
+            dimensions=[Dimension(name="date")],
+            metrics=[Metric(name="activeUsers")],
+        )
+        visitors_this_week_response = self.client.run_report(visitors_this_week_request)
+        for row in visitors_this_week_response.rows:
+            visitors_this_week.append((row.dimension_values[0], row.metric_values[0]))
+        return visitors_this_week
+
+    def get_visitors_last_week(self) -> List[Tuple[datetime, int]]:
+        visitors_last_week = []
+
+        visitors_last_week_request = RunReportRequest(
+            property="properties/" + self.property_id,
+            date_ranges=[DateRange(start_date="14daysAgo", end_date="7daysAgo")],
+            dimensions=[Dimension(name="date")],
+            metrics=[Metric(name="activeUsers")],
+        )
+        visitors_last_week_response = self.client.run_report(visitors_last_week_request)
+        for row in visitors_last_week_response.rows:
+            visitors_last_week.append((row.dimension_values[0], row.metric_values[0]))
+        return visitors_last_week
+
+    def get_top_pages(self) -> List[TopPage]:
+        top_pages = []
+
+        top_pages_request = RunReportRequest(
+            property="properties/" + self.property_id,
+            date_ranges=[DateRange(start_date="7daysAgo", end_date="today")],
+            dimensions=[Dimension(name="pagePath")],
+            metrics=[Metric(name="activeUsers")],
+            limit=10,
+        )
+        response = self.client.run_report(top_pages_request)
+        for row in response.rows:
+            top_pages.append(
+                TopPage(
+                    url=row.dimension_values[0].value,
+                    pageviews=row.metric_values[0].value,
                 )
-            ],
+            )
+        return top_pages
+
+    def get_top_sources(self) -> List[TopSource]:
+        top_sources = []
+
+        top_sources_request = RunReportRequest(
+            property="properties/" + self.property_id,
+            date_ranges=[DateRange(start_date="7daysAgo", end_date="today")],
+            dimensions=[Dimension(name="pagePath")],
+            metrics=[Metric(name="activeUsers")],
+            limit=10,
         )
-        return request
+        response = self.client.run_report(top_sources_request)
+        for row in response.rows:
+            top_sources.append(
+                TopSource(
+                    name=row.dimension_values[0].value,
+                    pageviews=row.metric_values[0].value,
+                )
+            )
+        return top_sources
 
-    def send_request(self, request: RunReportRequest):
-        try:
-            client = BetaAnalyticsDataClient()
-            response = client.run_report(request)
-            return response
-        except Exception as e:
-            raise ImproperlyConfigured(
-                f"Error while requesting {request} error: {e}"
-            ) from e
-
-    def get_report(self, request_data: GoogleRequestData):
-        report = Report(
-            request_data.name, self.send_request(self.create_request(request_data))
-        )
-        return report
-
-
-# this is a class that can be used to get reports from both plausible and google analytics
-# it can be used like this
-# client = PlausibleAnalyticsClient(api_key)
-# reporter = WagtailAnalyticsReporter(client)
-# request_data_list = PlausibleRequestDataList(requests=[request_data1, request_data2])
-# reporter.get_report(request_data_list)
-class WagtailAnalyticsReporter:
-    reports: List[Report]
-    wagtail_report: Wagtail_Analytics_Report
-
-    def __init__(self, client: Union[PlausibleAnalyticsClient, GoogleAnalyticsClient]):
-        self.client = client
-        self.reports = []
-        self.wagtail_report = Wagtail_Analytics_Report(0, 0, [], [], [], [])
-
-    def get_report(
-        self, request_data_list: Union[PlausibleRequestDataList, GoogleRequestDataList]
-    ):
-        if isinstance(self.client, PlausibleAnalyticsClient):
-            for request_data in request_data_list.requests:
-                self.reports.append(self.client.get_report(request_data))
-                self.wagtail_report = PlausibleAnalyticsReportMapper(
-                    self.reports, self.wagtail_report
-                ).map_reports()
-            return self.wagtail_report
-
-        elif isinstance(self.client, GoogleAnalyticsClient):
-            for request_data in request_data_list.requests:
-                self.reports.append(self.client.get_report(request_data))
-                self.wagtail_report = GoogleAnalyticsReportMapper(
-                    self.reports, self.wagtail_report
-                ).map_reports()
-            return self.wagtail_report
+    def get_report(self) -> Report:
+        return super().get_report()

@@ -1,0 +1,127 @@
+General:
+What data do I want to have?
+The number of sessions from this week and last week.
+The top 10 most visited pages of last week with the actual number of views on those pages.
+The top 10 referrals (the source where the user came from) of last week and the current week, and the number of page views from these referrals.
+
+Plausible:
+
+Number of visitors from this week:
+
+
+from datetime import date, timedelta
+
+today = date.today()
+start = today - timedelta(days=today.weekday())
+end = start + timedelta(days=6)
+
+print("Today: " + str(today))
+print("Week Start: " + str(start))
+print("Week End: " + str(end))
+
+
+url = https://plausible.io/api/v1/stats/aggregate?date={start},{end}&site_id=vicktor.nl&period=custom&metrics=visitors.format(start=start, end=end)
+
+{
+    "results": {
+        "visitors": {
+            "value": 224
+        }
+    }
+}
+
+
+Aantal visitors van vorige week:
+
+today = date.today()
+startnextweek = today - timedelta(days=today.weekday())
+
+start = startnextweek - timedelta()
+end = startnextweek
+
+
+url = https://plausible.io/api/v1/stats/aggregate?date={start},{end}&site_id=vicktor.nl&period=custom&metrics=visitors.format(start=start, end=end)
+
+{
+    "results": {
+        "visitors": {
+            "value": 224
+        }
+    }
+}
+
+
+
+Top 10 most visited pages and the number of views on these pages from the current and last week:
+
+url = https://plausible.io/api/v1/stats/breakdown?limit=10&date={startdate},{enddate}&site_id=vicktor.nl&period=custom&metrics=visitors&property=event:page.format(startdate=start, enddate=end)
+
+this will be 10 entries but i shortened it for readablity
+
+{
+    "results": [
+        {
+            "page": "/",
+            "visitors": 138
+        },
+        {
+            "page": "/academy/squash-django-migrations/",
+            "visitors": 52
+        },
+        {
+            "page": "/professionals/",
+            "visitors": 52
+        },
+        {
+            "page": "/opdrachtgevers/",
+            "visitors": 46
+        },
+    ]
+}
+
+
+
+
+
+
+Top 10 referrals (sources) and the number of visits from these sources from the current and last week:
+
+
+
+
+url = https://plausible.io/api/v1/stats/breakdown?limit=10&date={startdate},{enddate}&site_id=vicktor.nl&period=custom&metrics=visitors&property=visit:source.format(startdate=start, enddate=end)
+
+
+this will be 10 entries but i shortened it for readablity
+
+{
+    "results": [
+        {
+            "source": "Direct / None",
+            "visitors": 123
+        },
+        {
+            "source": "Google",
+            "visitors": 90
+        },
+        {
+            "source": "DuckDuckGo",
+            "visitors": 9
+        },
+        {
+            "source": "GitHub",
+            "visitors": 2
+        },
+    ]
+}
+
+
+
+Google Analytics v4:
+
+Number of visitors from this week:
+pass
+
+
+
+
