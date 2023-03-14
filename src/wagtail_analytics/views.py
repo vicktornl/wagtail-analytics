@@ -1,3 +1,6 @@
+import dataclasses
+import json
+
 from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.template.loader import render_to_string
@@ -8,11 +11,10 @@ from django.views import View
 from django.views.generic import TemplateView
 from wagtail.admin.edit_handlers import HelpPanel, ObjectList, TabbedInterface
 from wagtail.core.models import Page, Site
-
-from wagtail_analytics import settings
+from wagtail_analytics import settings as wagtail_analytics_settings
 from wagtail_analytics.forms import SiteSwitchForm
+from wagtail_analytics.lib.analytics import GoogleAnalyticsAPIClient, PlausibleAPIClient
 from wagtail_analytics.models import AnalyticsSettings
-from wagtail_analytics.utils import get_access_token_from_string
 
 
 class SessionsPanel(HelpPanel):
@@ -80,8 +82,6 @@ class DashboardView(TemplateView):
 
         analytics_settings = AnalyticsSettings.for_site(site)
 
-        if not analytics_settings.google_analytics_view_id:
-            raise Http404("No view id found")
 
         # Show a site switcher form if there are multiple sites
         site_switcher = None
@@ -90,8 +90,8 @@ class DashboardView(TemplateView):
 
         context.update(
             {
-                "access_token": get_access_token_from_string(settings.GA_KEY_CONTENT),
-                "id": analytics_settings.google_analytics_view_id,
+                "credentials": json.loads(wagtail_analytics_settings.GA_KEY_CONTENT),
+                "id": analytics_settings.google_analytics_property_id,
                 "site": site,
                 "site_switcher": site_switcher,
                 "config_url": reverse("wagtail-analytics-config"),
@@ -103,5 +103,30 @@ class DashboardView(TemplateView):
 class ConfigView(View):
     def get(self, request, *args, **kwargs):
         page_id = kwargs.get("page_id", None)
-        access_token = get_access_token_from_string(settings.GA_KEY_CONTENT)
-        return JsonResponse({"access_token": access_token, "page_id": page_id})
+        credentials = json.loads(wagtail_analytics_settings.GA_KEY_CONTENT)
+        return JsonResponse({"credentials": credentials, "page_id": page_id})
+
+
+class AnalyticsReportView(View):
+    def get(self, request, *args, **kwargs):
+        site_id = kwargs.get("site_id", None)
+        site = get_object_or_404(Site, id=site_id)
+        analytics_settings = AnalyticsSettings.for_site(site)
+        if analytics_settings.plausible_enabled is True:
+            client = PlausibleAPIClient(
+                analytics_settings.plausible_domain,
+                wagtail_analytics_settings.PLAUSIBLE_API_KEY,
+            )
+            report = client.get_report()
+            report_dict = dataclasses.asdict(report)
+            return JsonResponse(report_dict)
+        if analytics_settings.google_analytics_enabled is True:
+            credentials = json.loads(wagtail_analytics_settings.GA_KEY_CONTENT)
+            client = GoogleAnalyticsAPIClient(
+                analytics_settings.google_analytics_property_id,
+                credentials,
+            )
+            report = client.get_report()
+            report_dict = dataclasses.asdict(report)
+            return JsonResponse(report_dict)
+        return JsonResponse({"error": "No analytics provider enabled"})

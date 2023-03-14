@@ -96,3 +96,14 @@ def config_url():
             name="wagtail-analytics-config",
         ),
     ]
+
+
+@hooks.register("register_admin_urls")
+def register_api_urls():
+    return [
+        path(
+            "%s/api/<str:site_id>/" % wagtail_analytics_settings.PATH_PREFIX,
+            views.AnalyticsReportView.as_view(),
+            name="wagtail_analytics-report",
+        )
+    ]

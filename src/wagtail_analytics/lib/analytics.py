@@ -82,15 +82,21 @@ class PlausibleAPIClient(APIClient):
         self.api_key = api_key
         self.headers = {"Authorization": f"Bearer {self.api_key}"}
 
+    def request(self, url, headers):
+        response = requests.get(url, headers=headers)
+        if response.status_code != 200:
+            raise Exception(
+                f"Request failed with status code {response.status_code, response.text}"
+            )
+        return response.json()
+
     def get_visitors_this_week(self) -> List[Tuple[datetime, int]]:
         visitors_this_week = []
 
         url_this_week = "{base_url}/timeseries?date={range}&site_id={site_id}&period=custom&metrics=visitors".format(
             range=this_week_range, base_url=self.base_url, site_id=self.site_id
         )
-        visitor_this_week_response = requests.get(
-            url_this_week, headers=self.headers
-        ).json()
+        visitor_this_week_response = self.request(url_this_week, self.headers)
         for day in visitor_this_week_response["results"]:
             visitors_this_week.append((day["date"], day["visitors"]))
 
@@ -102,9 +108,7 @@ class PlausibleAPIClient(APIClient):
         url_last_week = "{base_url}/timeseries?date={range}&site_id={site_id}&period=custom&metrics=visitors".format(
             range=last_week_range, base_url=self.base_url, site_id=self.site_id
         )
-        visitor_last_week_response = requests.get(
-            url_last_week, headers=self.headers
-        ).json()
+        visitor_last_week_response = self.request(url_last_week, self.headers)
         for day in visitor_last_week_response["results"]:
             visitors_last_week.append((day["date"], day["visitors"]))
 
@@ -117,7 +121,7 @@ class PlausibleAPIClient(APIClient):
         url_top_pages = "{base_url}/breakdown?limit=10&date={range}&site_id={site_id}&period=custom&metrics=visitors&property=event:page".format(
             range=this_week_range, base_url=self.base_url, site_id=self.site_id
         )
-        response = requests.get(url_top_pages, headers=self.headers).json()
+        response = self.request(url_top_pages, headers=self.headers)
         for page in response["results"]:
             top_pages.append(TopPage(url=page["page"], pageviews=page["visitors"]))
         return top_pages
@@ -129,24 +133,22 @@ class PlausibleAPIClient(APIClient):
         url_top_sources = "{base_url}/breakdown?limit=10&date={range}&site_id={site_id}&period=custom&metrics=visitors&property=visit:source".format(
             range=this_week_range, base_url=self.base_url, site_id=self.site_id
         )
-        response = requests.get(url_top_sources, headers=self.headers).json()
+        response = self.request(url_top_sources, headers=self.headers)
         for source in response["results"]:
             top_sources.append(
                 TopSource(name=source["source"], pageviews=source["visitors"])
             )
         return top_sources
 
-    def get_report(self) -> Report:
-        return super().get_report()
-
 
 # for this to work u need a credentials json for the api and set the env variable to the path of the json
 # export GOOGLE_APPLICATION_CREDENTIALS="[PATH]"
 class GoogleAnalyticsAPIClient(APIClient):
-    client = BetaAnalyticsDataClient()
-
-    def __init__(self, propery_id) -> None:
-        self.property_id = propery_id
+    def __init__(self, property_id, credentials) -> None:
+        self.property_id = property_id
+        self.client = BetaAnalyticsDataClient.from_service_account_info(
+            info=credentials
+        )
 
     def get_visitors_this_week(self) -> List[Tuple[datetime, int]]:
         visitors_this_week = []
@@ -159,7 +161,9 @@ class GoogleAnalyticsAPIClient(APIClient):
         )
         visitors_this_week_response = self.client.run_report(visitors_this_week_request)
         for row in visitors_this_week_response.rows:
-            visitors_this_week.append((row.dimension_values[0], row.metric_values[0]))
+            date_obj = datetime.strptime(row.dimension_values[0].value, "%Y%m%d")
+            formatted_date = date_obj.strftime("%Y-%m-%d")
+            visitors_this_week.append((formatted_date, row.metric_values[0].value))
         return visitors_this_week
 
     def get_visitors_last_week(self) -> List[Tuple[datetime, int]]:
@@ -173,7 +177,9 @@ class GoogleAnalyticsAPIClient(APIClient):
         )
         visitors_last_week_response = self.client.run_report(visitors_last_week_request)
         for row in visitors_last_week_response.rows:
-            visitors_last_week.append((row.dimension_values[0], row.metric_values[0]))
+            date_obj = datetime.strptime(row.dimension_values[0].value, "%Y%m%d")
+            formatted_date = date_obj.strftime("%Y-%m-%d")
+            visitors_last_week.append((formatted_date, row.metric_values[0].value))
         return visitors_last_week
 
     def get_top_pages(self) -> List[TopPage]:
@@ -215,6 +221,3 @@ class GoogleAnalyticsAPIClient(APIClient):
                 )
             )
         return top_sources
-
-    def get_report(self) -> Report:
-        return super().get_report()

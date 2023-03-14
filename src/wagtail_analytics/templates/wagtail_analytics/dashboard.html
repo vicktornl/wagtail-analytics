@@ -73,6 +73,16 @@
         }(window,document,'script'));
       </script>
 
+{% comment %} <!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-L23HNJNBVP"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-L23HNJNBVP');
+</script> {% endcomment %}
+
     <script>
       gapi.analytics.ready(function() {
         getAPIToken('{{ config_url }}').then(function(accessToken){
