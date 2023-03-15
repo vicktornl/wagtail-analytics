@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
 from typing import List, Tuple
 
@@ -12,25 +11,7 @@ from google.analytics.data_v1beta.types import (
     RunReportRequest,
 )
 
-
-@dataclass
-class TopPage:
-    url: str
-    pageviews: int
-
-
-@dataclass
-class TopSource:
-    name: str
-    pageviews: int
-
-
-@dataclass
-class Report:
-    visitors_this_week: List[Tuple[datetime, int]]
-    visitors_last_week: List[Tuple[datetime, int]]
-    top_pages: List[TopPage]
-    top_sources: List[TopSource]
+from wagtail_analytics.types import Report, TopPage, TopSource
 
 
 class APIClient(ABC):
@@ -138,8 +119,6 @@ class PlausibleAPIClient(APIClient):
         return top_sources
 
 
-# for this to work u need a credentials json for the api and set the env variable to the path of the json
-# export GOOGLE_APPLICATION_CREDENTIALS="[PATH]"
 class GoogleAnalyticsAPIClient(APIClient):
     def __init__(self, property_id, credentials) -> None:
         self.property_id = property_id

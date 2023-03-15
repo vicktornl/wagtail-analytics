@@ -90,6 +90,7 @@ class DashboardView(TemplateView):
 
         context.update(
             {
+                "is_enabled": analytics_settings.is_enabled,
                 "site": site,
                 "site_switcher": site_switcher,
                 "report_url": reverse(

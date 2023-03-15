@@ -1,5 +1,5 @@
-function getReport(report_url) {
-  fetch(`${report_url}/`)
+function getReport(reportUrl) {
+  fetch(`${reportUrl}`)
     .then((response) => response.json())
     .then((report) => {
       console.log(report);
@@ -13,6 +13,7 @@ function getReport(report_url) {
       return false;
     });
 }
+
 function makeCanvas(container) {
   var container = document.getElementById("sessions-container");
   var canvas = document.createElement("canvas");

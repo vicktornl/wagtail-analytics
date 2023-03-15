@@ -29,8 +29,7 @@
     {% include "wagtailadmin/shared/header.html" with title="Analytics" subtitle="Dashboard" extra_actions=editing_actions %}
 
     <div class="nice-padding">
-      {% if site_id %}
-      <script>getReport({{ report_url }})</script>
+      {% if is_enabled %}
         <div class="col12 clearfix">
             <h2>{% trans "Sessions" %}</h2>
             <div id="sessions-container" class="chart"></div>
@@ -60,11 +59,12 @@
             </table>
         </div>
       </div>
-
       <script src="{% static 'chart.js/Chart.bundle.min.js' %}"></script>
       <script src="{% static 'moment/moment.min.js' %}"></script>
       <script src="{% static 'wagtailanalytics/main.js' %}"></script>
-
+      <script>
+          getReport('{{ report_url }}');
+      </script>
     {% else %}
     <h2 role="alert">
       {% trans "Sorry, no analytics available for" %} <em>{{ site.hostname }}</em>

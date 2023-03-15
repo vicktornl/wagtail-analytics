@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-install_requires = ["django>=3", "wagtail>=2", "google-auth"]
+install_requires = ["django>=3", "wagtail>=2", "google-analytics-data", "google-auth"]
 
 test_require = [
     "black",

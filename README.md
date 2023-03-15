@@ -8,13 +8,13 @@ A set of analytical features for your Wagtail CMS.
 
 ## Features
 
-* Google Analytics dashboard
-* Google Analytics, Google Tag Manager and Site verification settings per site
+* Dashboard
+* Plausible, Google Analytics (GA4), Google Tag Manager and Site verification settings per site
 
 ## Supported platforms
 
 * Plausible
-* Google Analytics
+* Google Analytics (GA4)
 * Google Tag Manager
 
 ## Requirements
@@ -66,5 +66,6 @@ Include `wagtail_analytics/body.html` at the top of your body
 ```
 
 ```python
+WAGTAIL_ANALYTICS_PLAUSIBLE_API_KEY = "xxx"
 WAGTAIL_ANALYTICS_GA_KEY_CONTENT = '{"type":"service_account","project_id":"...'
 ```

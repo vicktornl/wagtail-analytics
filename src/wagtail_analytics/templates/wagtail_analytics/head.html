@@ -11,15 +11,16 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 })(window,document,'script','dataLayer','{{ settings.google_tag_manager_container_id }}');</script>
 <!-- End Google Tag Manager -->
 {% endif %}
-{% if settings.google_analytics_enabled and settings.google_analytics_property_id %}
+{% if settings.google_analytics_enabled and settings.google_analytics_measurement_id %}
 <!-- Global site tag (gtag.js) - Google Analytics -->
-<script async src="https://www.googletagmanager.com/gtag/js?id={{ settings.google_analytics_property_id }}"></script>
+
+<script async src="https://www.googletagmanager.com/gtag/js?id={{ settings.google_analytics_measurement_id }}"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
 
-  gtag('config', '{{ settings.google_analytics_property_id }}');
+  gtag('config', '{{ settings.google_analytics_measurement_id }}');
 </script>
 {% endif %}
 {% if settings.google_site_verification %}
