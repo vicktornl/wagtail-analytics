@@ -30,7 +30,7 @@
 
     <div class="nice-padding">
       {% if site_id %}
-      <script>getReport({{ site_id }})</script>
+      <script>getReport({{ report_url }})</script>
         <div class="col12 clearfix">
             <h2>{% trans "Sessions" %}</h2>
             <div id="sessions-container" class="chart"></div>
@@ -67,9 +67,6 @@
 
     {% else %}
     <h2 role="alert">
-      <p>
-        {{ report_url }}
-      </p>
       {% trans "Sorry, no analytics available for" %} <em>{{ site.hostname }}</em>
     </h2>
     {% endif %}

@@ -1,11 +1,6 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
-from typing import Any, Dict, List, Literal, Optional, Tuple, Union
-
-import ipdb
-import requests
-from django.core.exceptions import ImproperlyConfigured
 from google.analytics.data_v1beta import BetaAnalyticsDataClient
 from google.analytics.data_v1beta.types import (
     DateRange,
@@ -13,14 +8,9 @@ from google.analytics.data_v1beta.types import (
     Metric,
     RunReportRequest,
 )
+from typing import List, Tuple
+import requests
 
-today = date.today()
-start_this_week = today - timedelta(days=today.weekday())
-end_this_week = start_this_week + timedelta(days=6)
-start_last_week = start_this_week - timedelta(days=7)
-end_last_week = end_this_week - timedelta(days=7)
-this_week_range = f"{start_this_week},{end_this_week}"
-last_week_range = f"{start_last_week},{end_last_week}"
 
 
 @dataclass
@@ -76,6 +66,13 @@ class APIClient(ABC):
 
 class PlausibleAPIClient(APIClient):
     base_url = "https://plausible.io/api/v1/stats"
+    today = date.today()
+    start_this_week = today - timedelta(days=today.weekday())
+    end_this_week = start_this_week + timedelta(days=6)
+    start_last_week = start_this_week - timedelta(days=7)
+    end_last_week = end_this_week - timedelta(days=7)
+    this_week_range = f"{start_this_week},{end_this_week}"
+    last_week_range = f"{start_last_week},{end_last_week}"
 
     def __init__(self, site_id, api_key) -> None:
         self.site_id = site_id
@@ -94,7 +91,7 @@ class PlausibleAPIClient(APIClient):
         visitors_this_week = []
 
         url_this_week = "{base_url}/timeseries?date={range}&site_id={site_id}&period=custom&metrics=visitors".format(
-            range=this_week_range, base_url=self.base_url, site_id=self.site_id
+            range=self.this_week_range, base_url=self.base_url, site_id=self.site_id
         )
         visitor_this_week_response = self.request(url_this_week, self.headers)
         for day in visitor_this_week_response["results"]:
@@ -106,7 +103,7 @@ class PlausibleAPIClient(APIClient):
         visitors_last_week = []
 
         url_last_week = "{base_url}/timeseries?date={range}&site_id={site_id}&period=custom&metrics=visitors".format(
-            range=last_week_range, base_url=self.base_url, site_id=self.site_id
+            range=self.last_week_range, base_url=self.base_url, site_id=self.site_id
         )
         visitor_last_week_response = self.request(url_last_week, self.headers)
         for day in visitor_last_week_response["results"]:
@@ -119,7 +116,7 @@ class PlausibleAPIClient(APIClient):
         top_pages = []
 
         url_top_pages = "{base_url}/breakdown?limit=10&date={range}&site_id={site_id}&period=custom&metrics=visitors&property=event:page".format(
-            range=this_week_range, base_url=self.base_url, site_id=self.site_id
+            range=self.this_week_range, base_url=self.base_url, site_id=self.site_id
         )
         response = self.request(url_top_pages, headers=self.headers)
         for page in response["results"]:
@@ -131,7 +128,7 @@ class PlausibleAPIClient(APIClient):
         top_sources = []
 
         url_top_sources = "{base_url}/breakdown?limit=10&date={range}&site_id={site_id}&period=custom&metrics=visitors&property=visit:source".format(
-            range=this_week_range, base_url=self.base_url, site_id=self.site_id
+            range=self.this_week_range, base_url=self.base_url, site_id=self.site_id
         )
         response = self.request(url_top_sources, headers=self.headers)
         for source in response["results"]:

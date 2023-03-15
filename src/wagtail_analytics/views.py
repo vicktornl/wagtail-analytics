@@ -105,7 +105,8 @@ class AnalyticsReportView(View):
         site_id = kwargs.get("site_id", None)
         site = get_object_or_404(Site, id=site_id)
         analytics_settings = AnalyticsSettings.for_site(site)
-        if analytics_settings.plausible_enabled is True:
+
+        if analytics_settings.plausible_enabled:
             client = PlausibleAPIClient(
                 site.hostname,
                 wagtail_analytics_settings.PLAUSIBLE_API_KEY,
@@ -113,7 +114,8 @@ class AnalyticsReportView(View):
             report = client.get_report()
             report_dict = dataclasses.asdict(report)
             return JsonResponse(report_dict)
-        if analytics_settings.google_analytics_enabled is True:
+        
+        if analytics_settings.google_analytics_enabled:
             credentials = json.loads(wagtail_analytics_settings.GA_KEY_CONTENT)
             client = GoogleAnalyticsAPIClient(
                 analytics_settings.google_analytics_property_id,
@@ -122,4 +124,4 @@ class AnalyticsReportView(View):
             report = client.get_report()
             report_dict = dataclasses.asdict(report)
             return JsonResponse(report_dict)
-        return JsonResponse({"error": "No analytics provider enabled"})
+        return JsonResponse(status=404)

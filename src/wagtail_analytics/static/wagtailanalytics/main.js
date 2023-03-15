@@ -1,5 +1,5 @@
-function getReport(site_id) {
-  fetch(`/cms/analytics/api/${site_id}/`)
+function getReport(report_url) {
+  fetch(`${report_url}/`)
     .then((response) => response.json())
     .then((report) => {
       console.log(report);
@@ -30,7 +30,7 @@ function renderSessions(container, report) {
   this_week_integers = [];
   last_week_integers = [];
 
-  for (var i = 0; i < 7; i++) {
+  for (var i = 0; i < report["visitors_this_week"].length; i++) {
     this_week_integers.push(parseInt(report["visitors_this_week"][i][1]));
     last_week_integers.push(parseInt(report["visitors_last_week"][i][1]));
   }
