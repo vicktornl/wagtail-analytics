@@ -6,11 +6,11 @@ function getReport(site_id) {
       renderSessions("sessions-container", report);
       renderTopPages("top-pages-container", report["top_pages"]);
       renderTopReferrers("top-referrers-container", report["top_sources"]);
-      return true
+      return true;
     })
     .catch(function (error) {
       console.log("Request failed", error);
-      return false
+      return false;
     });
 }
 function makeCanvas(container) {
@@ -67,7 +67,12 @@ function renderSessions(container, report) {
 function renderTopPages(container, report) {
   var html = "";
   for (var i = 0; i < report.length; i++) {
-    html += "<tr><td>" + report[i]["url"] + "</td><td>" + report[i]["pageviews"] + "</td></tr>";
+    html +=
+      "<tr><td>" +
+      report[i]["url"] +
+      "</td><td>" +
+      report[i]["pageviews"] +
+      "</td></tr>";
   }
 
   document.getElementById(container).innerHTML = html;
@@ -76,7 +81,12 @@ function renderTopPages(container, report) {
 function renderTopReferrers(container, report) {
   var html = "";
   for (var i = 0; i < report.length; i++) {
-    html += "<tr><td>" + report[i]["name"] + "</td><td>" + report[i]["pageviews"] + "</td></tr>";
+    html +=
+      "<tr><td>" +
+      report[i]["name"] +
+      "</td><td>" +
+      report[i]["pageviews"] +
+      "</td></tr>";
   }
 
   document.getElementById(container).innerHTML = html;
