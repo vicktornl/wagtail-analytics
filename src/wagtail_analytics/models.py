@@ -40,12 +40,6 @@ class AnalyticsSettings(BaseSetting):
         null=True,
         blank=True,
     )
-    google_analytics_view_id = models.CharField(
-        verbose_name=_("Google Analytics View ID"),
-        max_length=255,
-        null=True,
-        blank=True,
-    )
 
     google_site_verification = models.CharField(
         verbose_name=_("Google Site Verification"),
@@ -73,7 +67,6 @@ class AnalyticsSettings(BaseSetting):
             [
                 FieldPanel("google_analytics_enabled"),
                 FieldPanel("google_analytics_property_id"),
-                FieldPanel("google_analytics_view_id"),
             ],
             heading=_("Google Analytics"),
         ),

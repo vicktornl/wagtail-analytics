@@ -7,7 +7,7 @@ def get_setting(name: str, default=None):
 
 
 GA_KEY_CONTENT = get_setting("GA_KEY_CONTENT", default="")
-
+PLAUSIBLE_API_KEY = get_setting("PLAUSIBLE_API_KEY", default="")
 PATH_PREFIX = get_setting("PATH_PREFIX", default="analytics")
 MENU_LABEL = get_setting("MENU_LABEL", default=_("Analytics"))
 MENU_ORDER = get_setting("MENU_ORDER", default=8000)
