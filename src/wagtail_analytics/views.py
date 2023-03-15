@@ -114,7 +114,7 @@ class AnalyticsReportView(View):
             report = client.get_report()
             report_dict = dataclasses.asdict(report)
             return JsonResponse(report_dict)
-        
+
         if analytics_settings.google_analytics_enabled:
             credentials = json.loads(wagtail_analytics_settings.GA_KEY_CONTENT)
             client = GoogleAnalyticsAPIClient(

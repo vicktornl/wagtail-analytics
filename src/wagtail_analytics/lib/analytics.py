@@ -1,6 +1,9 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
+from typing import List, Tuple
+
+import requests
 from google.analytics.data_v1beta import BetaAnalyticsDataClient
 from google.analytics.data_v1beta.types import (
     DateRange,
@@ -8,9 +11,6 @@ from google.analytics.data_v1beta.types import (
     Metric,
     RunReportRequest,
 )
-from typing import List, Tuple
-import requests
-
 
 
 @dataclass
