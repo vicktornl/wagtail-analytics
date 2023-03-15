@@ -83,27 +83,11 @@ def insert_analytics_js():
 
 
 @hooks.register("register_admin_urls")
-def config_url():
-    return [
-        path(
-            "%s/config/<str:page_id>/" % wagtail_analytics_settings.PATH_PREFIX,
-            views.ConfigView.as_view(),
-            name="wagtail-analytics-config",
-        ),
-        path(
-            "%s/config" % wagtail_analytics_settings.PATH_PREFIX,
-            views.ConfigView.as_view(),
-            name="wagtail-analytics-config",
-        ),
-    ]
-
-
-@hooks.register("register_admin_urls")
 def register_api_urls():
     return [
         path(
             "%s/api/<str:site_id>/" % wagtail_analytics_settings.PATH_PREFIX,
             views.AnalyticsReportView.as_view(),
-            name="wagtail_analytics-report",
+            name="wagtail-analytics-report",
         )
     ]

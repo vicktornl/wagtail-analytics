@@ -11,6 +11,7 @@ from django.views import View
 from django.views.generic import TemplateView
 from wagtail.admin.edit_handlers import HelpPanel, ObjectList, TabbedInterface
 from wagtail.core.models import Page, Site
+
 from wagtail_analytics import settings as wagtail_analytics_settings
 from wagtail_analytics.forms import SiteSwitchForm
 from wagtail_analytics.lib.analytics import GoogleAnalyticsAPIClient, PlausibleAPIClient
@@ -82,7 +83,6 @@ class DashboardView(TemplateView):
 
         analytics_settings = AnalyticsSettings.for_site(site)
 
-
         # Show a site switcher form if there are multiple sites
         site_switcher = None
         if Site.objects.count() > 1:
@@ -90,21 +90,14 @@ class DashboardView(TemplateView):
 
         context.update(
             {
-                "credentials": json.loads(wagtail_analytics_settings.GA_KEY_CONTENT),
-                "id": analytics_settings.google_analytics_property_id,
                 "site": site,
                 "site_switcher": site_switcher,
-                "config_url": reverse("wagtail-analytics-config"),
+                "report_url": reverse(
+                    "wagtail-analytics-report", kwargs={"site_id": site.id}
+                ),
             }
         )
         return context
-
-
-class ConfigView(View):
-    def get(self, request, *args, **kwargs):
-        page_id = kwargs.get("page_id", None)
-        credentials = json.loads(wagtail_analytics_settings.GA_KEY_CONTENT)
-        return JsonResponse({"credentials": credentials, "page_id": page_id})
 
 
 class AnalyticsReportView(View):
@@ -114,7 +107,7 @@ class AnalyticsReportView(View):
         analytics_settings = AnalyticsSettings.for_site(site)
         if analytics_settings.plausible_enabled is True:
             client = PlausibleAPIClient(
-                analytics_settings.plausible_domain,
+                site.hostname,
                 wagtail_analytics_settings.PLAUSIBLE_API_KEY,
             )
             report = client.get_report()
