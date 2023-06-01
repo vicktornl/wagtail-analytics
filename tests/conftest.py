@@ -19,7 +19,7 @@ def pytest_configure():
             "wagtail.images",
             "wagtail.search",
             "wagtail.admin",
-            "wagtail.core",
+            "wagtail",
             "modelcluster",
             "taggit",
             "django.contrib.auth",
@@ -38,6 +38,6 @@ def pytest_configure():
             "django.contrib.auth.middleware.AuthenticationMiddleware",
             "django.contrib.messages.middleware.MessageMiddleware",
             "django.middleware.clickjacking.XFrameOptionsMiddleware",
-            "wagtail.core.middleware.SiteMiddleware",
+            "wagtail.middleware.SiteMiddleware",
         ],
     )

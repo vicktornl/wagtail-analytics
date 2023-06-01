@@ -9,8 +9,8 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 from django.views import View
 from django.views.generic import TemplateView
-from wagtail.admin.edit_handlers import HelpPanel, ObjectList, TabbedInterface
-from wagtail.core.models import Page, Site
+from wagtail.admin.panels import HelpPanel, ObjectList, TabbedInterface
+from wagtail.models import Page, Site
 
 from wagtail_analytics import settings as wagtail_analytics_settings
 from wagtail_analytics.forms import SiteSwitchForm

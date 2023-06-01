@@ -1,7 +1,7 @@
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import pgettext_lazy
-from wagtail.admin.edit_handlers import FieldPanel, HelpPanel, MultiFieldPanel
+from wagtail.admin.panels import FieldPanel, HelpPanel, MultiFieldPanel
 from wagtail.contrib.settings.models import BaseSetting, register_setting
 
 from wagtail_analytics import settings

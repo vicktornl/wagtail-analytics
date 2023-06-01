@@ -3,7 +3,7 @@ from django.urls import include, path, re_path, reverse
 from django.utils.html import format_html, format_html_join
 from django.utils.translation import gettext_lazy as _
 from wagtail.admin.menu import Menu, MenuItem, SubmenuMenuItem
-from wagtail.core import hooks
+from wagtail import hooks
 
 from wagtail_analytics import settings as wagtail_analytics_settings
 from wagtail_analytics import views

@@ -1,6 +1,6 @@
 import factory
 from django.utils.text import slugify
-from wagtail.core.models import Page
+from wagtail.models import Page
 
 
 class PageFactory(factory.Factory):
