@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-install_requires = ["django>=3", "wagtail>=2", "google-analytics-data", "google-auth"]
+install_requires = ["django>=4", "wagtail>=5", "google-analytics-data", "google-auth"]
 
 test_require = [
     "black",
@@ -15,7 +15,7 @@ docs_require = []
 
 setup(
     name="wagtail-analytics",
-    version="0.4.0",
+    version="0.5.0",
     description="",
     author="Moori",
     install_requires=install_requires,
