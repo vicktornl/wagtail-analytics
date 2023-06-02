@@ -2,13 +2,13 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import pgettext_lazy
 from wagtail.admin.panels import FieldPanel, HelpPanel, MultiFieldPanel
-from wagtail.contrib.settings.models import BaseSetting, register_setting
+from wagtail.contrib.settings.models import BaseSiteSetting, register_setting
 
 from wagtail_analytics import settings
 
 
 @register_setting(icon="view")
-class AnalyticsSettings(BaseSetting):
+class AnalyticsSettings(BaseSiteSetting):
     id = models.AutoField(primary_key=True, auto_created=True, verbose_name="ID")
 
     #: plausible
