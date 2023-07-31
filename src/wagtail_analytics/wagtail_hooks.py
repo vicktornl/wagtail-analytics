@@ -1,3 +1,4 @@
+from django.contrib.auth.models import Permission
 from django.templatetags.static import static
 from django.urls import include, path, re_path, reverse
 from django.utils.html import format_html, format_html_join
@@ -7,6 +8,7 @@ from wagtail.admin.menu import Menu, MenuItem, SubmenuMenuItem
 
 from wagtail_analytics import settings as wagtail_analytics_settings
 from wagtail_analytics import views
+from wagtail_analytics.models import AnalyticsSettings
 
 wagtail_analytics_menu = Menu(
     register_hook_name="register_wagtail_analytics_menu_item",
@@ -16,8 +18,17 @@ wagtail_analytics_menu = Menu(
 
 class WagtailAnalyticsMenuItem(MenuItem):
     def is_shown(self, request):
-        # TODO: Fix permissions
-        return request.user.is_superuser
+        return request.user.has_perm("wagtail_analytics.view_analyticssettings")
+
+
+@hooks.register("register_permissions")
+def register_permissions():
+    app = "wagtail_analytics"
+    model = "analyticssettings"
+
+    return Permission.objects.filter(
+        content_type__app_label=app, codename__in=[f"view_{model}"]
+    )
 
 
 @hooks.register("register_admin_urls")
@@ -41,7 +52,7 @@ def register_menu():
     return SubmenuMenuItem(
         wagtail_analytics_settings.MENU_LABEL,
         wagtail_analytics_menu,
-        classnames="icon icon-fa-bar-chart",
+        classnames="icon icon-view",
         order=wagtail_analytics_settings.MENU_ORDER,
     )
 
@@ -51,7 +62,7 @@ def register_menu_item():
     return WagtailAnalyticsMenuItem(
         _("Dashboard"),
         reverse("wagtail-analytics-dashboard"),
-        classnames="icon icon-fa-tachometer",
+        classnames="icon icon-view",
         order=0,
     )
 
