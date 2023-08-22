@@ -67,8 +67,8 @@ def register_menu_item():
     )
 
 
-@hooks.register("insert_editor_css")
-def insert_analytics_css():
+@hooks.register("insert_global_admin_css")
+def insert_global_admin_css():
     css_files = ["chart.js/Chart.min.css", "wagtailanalytics/main.css"]
     css_includes = format_html_join(
         "\n",
