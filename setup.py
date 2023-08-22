@@ -15,7 +15,7 @@ docs_require = []
 
 setup(
     name="wagtail-analytics",
-    version="0.5.1",
+    version="0.5.2",
     description="",
     author="Moori",
     install_requires=install_requires,
