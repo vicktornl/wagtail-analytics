@@ -52,7 +52,7 @@ def register_menu():
     return SubmenuMenuItem(
         wagtail_analytics_settings.MENU_LABEL,
         wagtail_analytics_menu,
-        classnames="icon icon-view",
+        classname="icon icon-view",
         order=wagtail_analytics_settings.MENU_ORDER,
     )
 
@@ -62,7 +62,7 @@ def register_menu_item():
     return WagtailAnalyticsMenuItem(
         _("Dashboard"),
         reverse("wagtail-analytics-dashboard"),
-        classnames="icon icon-view",
+        classname="icon icon-view",
         order=0,
     )
 
